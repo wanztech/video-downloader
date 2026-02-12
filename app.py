@@ -149,7 +149,7 @@ def download_video(url, quality, progress_callback=None):
     if youtube_match:
         video_id = youtube_match.group(1)
         if len(video_id) < 11:
-            return None, f"Invalid YouTube ID: {video_id}. Must be 11 characters."
+            return None, f"Invalid YouTube ID: '{video_id}' (length: {len(video_id)}). YouTube IDs must be 11 characters long."
     
     # Build quality format
     if quality == '1080p':
