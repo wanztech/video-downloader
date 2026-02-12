@@ -141,6 +141,9 @@ def download_video(url, quality, progress_callback=None):
     temp_dir = tempfile.mkdtemp()
     output_path = os.path.join(temp_dir, '%(title)s.%(ext)s')
     
+    # Clean URL - remove list parameter to avoid playlist issues
+    url = re.sub(r'&list=[^&]*', '', url)
+    
     # Build quality format
     if quality == '1080p':
         fmt = 'bestvideo[height<=1080]+bestaudio/best[height<=1080]'
