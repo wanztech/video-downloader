@@ -144,6 +144,13 @@ def download_video(url, quality, progress_callback=None):
     # Clean URL - remove list parameter to avoid playlist issues
     url = re.sub(r'&list=[^&]*', '', url)
     
+    # Validate YouTube URL
+    youtube_match = re.search(r'v=([\w-]{11})', url)
+    if youtube_match:
+        video_id = youtube_match.group(1)
+        if len(video_id) < 11:
+            return None, f"Invalid YouTube ID: {video_id}. Must be 11 characters."
+    
     # Build quality format
     if quality == '1080p':
         fmt = 'bestvideo[height<=1080]+bestaudio/best[height<=1080]'
