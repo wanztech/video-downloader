@@ -34,11 +34,55 @@ st.markdown("""
         font-size: 0.85rem;
     }
     .anime { background-color: #8B5CF6; color: white; }
+    .youtube { background-color: #FF0000; color: white; }
+    .social { background-color: #1DA1F2; color: white; }
+    .dailymotion { background-color: #0066DC; color: white; }
+    .bilibili { background-color: #00A1D6; color: white; }
     .movie { background-color: #F59E0B; color: white; }
     .drama { background-color: #10B981; color: white; }
     .unknown { background-color: #EF4444; color: white; }
     .stProgress > div > div > div > div {
         background-color: #8B5CF6;
+    }
+    
+    /* Hide Streamlit components */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    .stDeployButton {display:none;}
+    
+    /* Custom Button Styling */
+    .stButton > button {
+        width: 100%;
+        border-radius: 10px;
+        height: 3em;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    
+    /* Analysis Button (Secondary) */
+    .stButton > button[kind="secondary"] {
+        border: 2px solid #8B5CF6;
+        color: #8B5CF6;
+    }
+    .stButton > button[kind="secondary"]:hover {
+        background-color: #8B5CF6;
+        color: white;
+        border-color: #8B5CF6;
+        transform: scale(1.02);
+    }
+    
+    /* Download Button (Primary) */
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(90deg, #EF4444 0%, #F59E0B 100%);
+        border: none;
+        color: white;
+        box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.39);
+    }
+    .stButton > button[kind="primary"]:hover {
+        background: linear-gradient(90deg, #DC2626 0%, #D97706 100%);
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.23);
+        transform: scale(1.02);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -50,6 +94,21 @@ SITES = {
         (r'animepahe', 'AnimePahe', 'https://animepahe.ru/'),
         (r'9animetv|aniwave', '9Anime/AniWave', 'https://9animetv.to/'),
         (r'zoro|aniwatch|hianime', 'HiAnime', 'https://hianime.to/'),
+    ],
+    'youtube': [
+        (r'youtube\.com|youtu\.be', 'YouTube', 'https://www.youtube.com/'),
+    ],
+    'dailymotion': [
+        (r'dailymotion\.com|dai\.ly', 'Dailymotion', 'https://www.dailymotion.com/'),
+    ],
+    'bilibili': [
+        (r'bilibili\.com|bilibili\.tv', 'Bilibili', 'https://www.bilibili.com/'),
+    ],
+    'social': [
+        (r'facebook\.com|fb\.watch', 'Facebook', 'https://www.facebook.com/'),
+        (r'instagram\.com', 'Instagram', 'https://www.instagram.com/'),
+        (r'tiktok\.com', 'TikTok', 'https://www.tiktok.com/'),
+        (r'twitter\.com|x\.com', 'Twitter/X', 'https://twitter.com/'),
     ],
     'movie': [
         (r'fmovies', 'FMovies', 'https://fmoviesz.to/'),
@@ -96,17 +155,38 @@ def get_video_host_referer(url):
     return None
 
 
+def get_executable_path(name):
+    """Get path to executable, checking local dirs first"""
+    # Check current directory
+    if os.path.exists(f"{name}.exe"):
+        return os.path.abspath(f"{name}.exe")
+    
+    # Check parent directory
+    parent_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), f"{name}.exe")
+    if os.path.exists(parent_path):
+        return parent_path
+        
+    return name
+
 def check_dependencies():
     """Check if yt-dlp and ffmpeg are available"""
+    yt_dlp_path = get_executable_path('yt-dlp')
+    ffmpeg_path = get_executable_path('ffmpeg')
+    
     try:
-        result = subprocess.run(['yt-dlp', '--version'], capture_output=True, text=True)
+        result = subprocess.run([yt_dlp_path, '--version'], capture_output=True, text=True)
         ytdlp_version = result.stdout.strip()
     except:
         ytdlp_version = None
     
     try:
-        result = subprocess.run(['ffmpeg', '-version'], capture_output=True, text=True)
-        ffmpeg_available = True
+        # Check ffmpeg
+        if ffmpeg_path != 'ffmpeg':
+            # If we found a local ffmpeg, it's definitely available
+            ffmpeg_available = True
+        else:
+            result = subprocess.run(['ffmpeg', '-version'], capture_output=True, text=True)
+            ffmpeg_available = True
     except:
         ffmpeg_available = False
     
@@ -115,8 +195,9 @@ def check_dependencies():
 
 def get_video_info(url):
     """Get video metadata using yt-dlp"""
+    yt_dlp_path = get_executable_path('yt-dlp')
     try:
-        cmd = ['yt-dlp', '--dump-json', '--no-playlist', url]
+        cmd = [yt_dlp_path, '--dump-json', '--no-playlist', url]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         
         if result.returncode != 0:
@@ -136,10 +217,22 @@ def get_video_info(url):
         return None, str(e)
 
 
-def download_video(url, quality, progress_callback=None):
+def download_video(url, quality, embed_subs=False, embed_thumb=False, audio_format='mp3', custom_filename=None, progress_callback=None):
     """Download video using yt-dlp"""
+    yt_dlp_path = get_executable_path('yt-dlp')
+    ffmpeg_path = get_executable_path('ffmpeg')
+    
     temp_dir = tempfile.mkdtemp()
-    output_path = os.path.join(temp_dir, '%(title)s.%(ext)s')
+    
+    # Handle custom filename
+    if custom_filename:
+        # Sanitize filename
+        custom_filename = re.sub(r'[\\/*?:"<>|]', "", custom_filename)
+        output_template = f"{custom_filename}.%(ext)s"
+    else:
+        output_template = '%(title)s.%(ext)s'
+        
+    output_path = os.path.join(temp_dir, output_template)
     
     # Clean URL - remove list parameter to avoid playlist issues
     url = re.sub(r'&list=[^&]*', '', url)
@@ -152,7 +245,11 @@ def download_video(url, quality, progress_callback=None):
             return None, f"Invalid YouTube ID: '{video_id}' (length: {len(video_id)}). YouTube IDs must be 11 characters long."
     
     # Build quality format
-    if quality == '1080p':
+    if '4K' in quality:
+        fmt = 'bestvideo[height<=2160]+bestaudio/best[height<=2160]'
+    elif '2K' in quality:
+        fmt = 'bestvideo[height<=1440]+bestaudio/best[height<=1440]'
+    elif quality == '1080p':
         fmt = 'bestvideo[height<=1080]+bestaudio/best[height<=1080]'
     elif quality == '720p':
         fmt = 'bestvideo[height<=720]+bestaudio/best[height<=720]'
@@ -165,17 +262,35 @@ def download_video(url, quality, progress_callback=None):
     
     # Build command
     cmd = [
-        'yt-dlp',
+        yt_dlp_path,
         '-f', fmt,
         '-o', output_path,
         '--merge-output-format', 'mp4',
         '--no-playlist',
-        '--extractor-args', 'generic:impersonate'
+        '--extractor-args', 'generic:impersonate',
+        '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     ]
+    
+    # Add Subtitles
+    if embed_subs:
+        cmd.extend(['--embed-subs', '--sub-langs', 'all', '--write-subs'])
+        
+    # Add Thumbnail
+    if embed_thumb:
+        cmd.extend(['--embed-thumbnail'])
+    
+    # Check for cookies file
+    cookies_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'cookies.txt')
+    if os.path.exists(cookies_path):
+        cmd.extend(['--cookies', cookies_path])
+    
+    # Add ffmpeg location if needed
+    if ffmpeg_path != 'ffmpeg':
+        cmd.extend(['--ffmpeg-location', os.path.dirname(ffmpeg_path)])
     
     # Add audio-only options
     if quality == 'Audio Only':
-        cmd.extend(['-x', '--audio-format', 'mp3'])
+        cmd.extend(['-x', '--audio-format', audio_format])
     
     # Add smart headers for video hosts
     referer = get_video_host_referer(url)
@@ -190,25 +305,30 @@ def download_video(url, quality, progress_callback=None):
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True
         )
         
         # Monitor progress
+        output_log = []
         while True:
-            line = process.stderr.readline()
+            line = process.stdout.readline()
             if not line and process.poll() is not None:
                 break
-            if line and progress_callback:
-                # Parse progress from yt-dlp output
-                if '[download]' in line and '%' in line:
-                    progress_callback(line)
+            if line:
+                output_log.append(line)
+                if progress_callback:
+                    # Parse progress from yt-dlp output
+                    if '[download]' in line and '%' in line:
+                        progress_callback(line)
         
         # Find downloaded file
         files = list(Path(temp_dir).glob('*'))
         if files:
             return str(files[0]), None
-        return None, "No file downloaded"
+            
+        full_error = "".join(output_log)
+        return None, f"No file downloaded. Log: {full_error}"
         
     except Exception as e:
         return None, str(e)
@@ -238,7 +358,7 @@ def main():
     # URL Input
     url = st.text_input(
         "📎 Paste URL Video di sini:",
-        placeholder="https://youtube.com/watch?v=... atau https://9animetv.to/...",
+        placeholder="https://www.youtube.com/watch?v=...",
         help="Support YouTube, streaming sites, dan banyak lagi"
     )
     
@@ -248,6 +368,10 @@ def main():
         
         category_colors = {
             'anime': 'anime',
+            'youtube': 'youtube',                                           
+            'dailymotion': 'dailymotion',
+            'bilibili': 'bilibili',
+            'social': 'social',
             'movie': 'movie', 
             'drama': 'drama',
             'unknown': 'unknown'
@@ -260,11 +384,39 @@ def main():
         """, unsafe_allow_html=True)
     
     # Quality Selection
-    quality = st.selectbox(
-        "🎯 Pilih Kualiti:",
-        ['1080p', '720p', '480p', 'Audio Only'],
-        help="1080p = Full HD, 720p = HD, 480p = SD (paling laju)"
+    col_qual1, col_qual2 = st.columns([2, 1])
+    
+    with col_qual1:
+        quality = st.selectbox(
+            "🎯 Pilih Kualiti:",
+            ['4K (2160p)', '2K (1440p)', '1080p', '720p', '480p', 'Audio Only'],
+            help="4K/2K = Ultra HD, 1080p = Full HD, 720p = HD"
+        )
+    
+    with col_qual2:
+        audio_fmt = 'mp3'
+        if quality == 'Audio Only':
+            audio_fmt = st.selectbox(
+                "🎵 Format Audio:",
+                ['mp3', 'm4a', 'wav', 'flac'],
+                help="Pilih format audio yang dikehendaki"
+            )
+        else:
+            st.selectbox("🎵 Format Audio:", ['-'], disabled=True)
+            
+    # Custom Filename
+    custom_name = st.text_input(
+        "📝 Nama Fail (Optional):",
+        placeholder="Biarkan kosong untuk guna nama asal video...",
+        help="Masukkan nama fail baru jika mahu (tak perlu letak .mp4/.mp3)"
     )
+    
+    # Advanced Options
+    col_opt1, col_opt2 = st.columns(2)
+    with col_opt1:
+        embed_subs = st.checkbox("📝 Download Subtitle (Softsubs)", value=True, help="Download dan masukkan subtitle ke dalam video (jika ada)")
+    with col_opt2:
+        embed_thumb = st.checkbox("🖼️ Embed Thumbnail", value=True, help="Letak gambar cover pada video/lagu")
     
     # Buttons
     col1, col2 = st.columns(2)
@@ -273,7 +425,7 @@ def main():
         analyze_btn = st.button("🔍 Analisis Video", use_container_width=True)
     
     with col2:
-        download_btn = st.button("⬇️ Download", use_container_width=True, type="primary")
+        download_btn = st.button("🚀 Mula Download", use_container_width=True, type="primary")
     
     # Progress placeholder
     progress_placeholder = st.empty()
@@ -312,7 +464,7 @@ def main():
         
         status_text.info("🔄 Sedang download... Sila tunggu.")
         
-        file_path, error = download_video(url, quality, update_progress)
+        file_path, error = download_video(url, quality, embed_subs, embed_thumb, audio_fmt, custom_name, update_progress)
         
         if file_path:
             progress_bar.progress(100)
@@ -344,11 +496,29 @@ def main():
             status_text.error(f"❌ Download gagal: {error}")
     
     # Footer
+    with st.expander("ℹ️ Lihat senarai website yang disokong"):
+        st.markdown("""
+        **Platform Video Utama:**
+        - ✅ YouTube, Dailymotion, Bilibili, Vimeo
+        
+        **Media Sosial:**
+        - ✅ Facebook, Instagram, TikTok, Twitter/X, Reddit, Pinterest
+        
+        **Anime:**
+        - 🎌 GogoAnime, HiAnime
+        - ⚠️ AnimePahe, 9Anime/AniWave (Mungkin tidak stabil - 403 Forbidden)
+        
+        **Drama & Movies:**
+        - 🎬 Dramacool, KissAsian, FMovies, 123Movies
+        
+        *Dan beribu lagi website yang disupport oleh yt-dlp!*
+        """)
+        
     st.markdown("---")
     st.markdown("""
-    <div style="text-align: center; color: #666; font-size: 0.85rem;">
-        <p>⚠️ Website ini untuk tujuan pendidikan sahaja.</p>
-        <p>Support content creators dengan subscribe channel mereka!</p>
+    <div style="text-align: center; color: #4b5563; font-size: 0.9rem; padding: 25px; background: linear-gradient(145deg, #f3f4f6, #e5e7eb); border-radius: 15px; margin-top: 30px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e5e7eb;">
+        <p style="text-align: center; margin-bottom: 12px; font-weight: 500;">✨ <b>Penafian:</b> Alat ini dibangunkan untuk tujuan pembelajaran & arkib peribadi sahaja.</p>
+        <p style="text-align: center; margin-bottom: 0; color: #6b7280;">Sila hormati hak cipta & sokong <i>content creator</i> dengan melanggan saluran rasmi mereka! ❤️</p>
     </div>
     """, unsafe_allow_html=True)
 
