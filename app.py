@@ -50,8 +50,18 @@ st.markdown("""
     header {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display:none;}
-    ._profilePreview_gzau3_63 {display: none !important;}
-    ._link_gzau3_10 {display: none !important;}
+    
+    /* Hide Profile Preview - target by substring and attribute */
+    div[class*="_profilePreview_"] { display: none !important; }
+    img[data-testid="appCreatorAvatar"] { display: none !important; }
+    
+    /* Hide Logo/Link - target by specific SVG content and substring */
+    div[class*="_link_"]:has(svg) { display: none !important; }
+    div:has(> svg[viewBox="0 0 303 165"]) { display: none !important; }
+    
+    /* Additional Streamlit Cloud UI hiding */
+    .viewerBadge_container__1QSob { display: none !important; }
+    [data-testid="stHeader"] { visibility: hidden !important; }
     
     /* Custom Button Styling */
     .stButton > button {
