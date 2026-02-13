@@ -52,6 +52,15 @@ st.markdown("""
     footer[class*="flex-none flex flex-col"] { display: none !important; }
     .footer { display: none !important; }
     
+    /* AGGRESSIVE: Hide specific elements by class patterns found in source */
+    div[class*="_profilePreview_"] { display: none !important; }
+    div[class*="_link_"] { display: none !important; }
+    img[data-testid="appCreatorAvatar"] { display: none !important; }
+    
+    /* Hide the specific Streamlit SVG Logo */
+    svg[viewBox="0 0 303 165"] { display: none !important; }
+    div:has(> svg[viewBox="0 0 303 165"]) { display: none !important; }
+    
     /* Hide Profile Preview - target by substring and attribute */
     div[class*="_profilePreview_"] { display: none !important; }
     img[data-testid="appCreatorAvatar"] { display: none !important; }
