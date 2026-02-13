@@ -169,8 +169,12 @@ with gr.Blocks(theme=theme, css=css, title="Universal Video Downloader Pro") as 
     download_btn.click(
         process_download,
         inputs=[url_input, quality_dropdown, audio_fmt_dropdown, custom_name_input, subs_check, thumb_check],
-        outputs=[file_output, status_output]
+        outputs=[file_output, status_output],
+        show_progress=True
     )
 
 if __name__ == "__main__":
-    app.queue().launch()
+    # Hugging Face Spaces usually runs the script, so queue().launch() is correct.
+    # However, sometimes ssr_mode=False is needed if static assets fail.
+    # Also ensuring server_name is correct for container environments.
+    app.queue().launch(ssr_mode=False)
