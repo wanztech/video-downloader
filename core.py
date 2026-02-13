@@ -122,7 +122,10 @@ def get_video_info(url):
     """Get video metadata using yt-dlp"""
     yt_dlp_path = get_executable_path('yt-dlp')
     try:
-        cmd = [yt_dlp_path, '--dump-json', '--no-playlist', url]
+        cmd = [yt_dlp_path, '--dump-json', '--no-playlist', '--force-ipv4', '--no-check-certificates', url]
+        if yt_dlp_path == 'yt-dlp':
+            cmd = [sys.executable, '-m', 'yt_dlp', '--dump-json', '--no-playlist', '--force-ipv4', '--no-check-certificates', url]
+        
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         
         if result.returncode != 0:
@@ -198,6 +201,8 @@ def download_video(url, quality, embed_subs=False, embed_thumb=False, audio_form
         '-o', output_path,
         '--merge-output-format', 'mp4',
         '--no-playlist',
+        '--force-ipv4',  # Force IPv4 to avoid IPv6 DNS issues
+        '--no-check-certificates', # Avoid SSL certificate issues
         '--socket-timeout', '30',
         '--extractor-args', 'generic:impersonate',
         '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
