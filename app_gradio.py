@@ -24,28 +24,37 @@ def analyze_video(url):
 def process_download(url, quality, audio_fmt, custom_name, embed_subs, embed_thumb, progress=gr.Progress()):
     """Wrapper for downloading video"""
     if not url:
-        return None, "Sila masukkan URL."
+        return None, "⚠️ Sila masukkan URL."
     
     progress(0, desc="Starting download...")
     
-    def progress_callback(line):
-        # Simple parsing for progress bar
-        if '[download]' in line and '%' in line:
-            try:
-                percent_str = line.split('%')[0].split()[-1]
-                percent = float(percent_str)
-                progress(percent / 100, desc=f"Downloading: {percent}%")
-            except:
-                pass
-    
-    file_path, error = core.download_video(
-        url, quality, embed_subs, embed_thumb, audio_fmt, custom_name, progress_callback
-    )
-    
-    if error:
-        return None, f"Error: {error}"
-    
-    return file_path, "✅ Download Selesai!"
+    try:
+        def progress_callback(line):
+            # Simple parsing for progress bar
+            if '[download]' in line and '%' in line:
+                try:
+                    percent_str = line.split('%')[0].split()[-1]
+                    percent = float(percent_str)
+                    progress(percent / 100, desc=f"Downloading: {percent}%")
+                except:
+                    pass
+        
+        file_path, error = core.download_video(
+            url, quality, embed_subs, embed_thumb, audio_fmt, custom_name, progress_callback
+        )
+        
+        if error:
+            return None, f"❌ Ralat: {error}"
+        
+        if not file_path or not os.path.exists(file_path):
+            return None, "❌ Ralat: Fail tidak dijumpai selepas muat turun."
+            
+        return file_path, "✅ Download Selesai!"
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return None, f"❌ Ralat Kritikal: {str(e)}"
 
 # Custom CSS
 css = """

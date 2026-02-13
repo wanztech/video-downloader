@@ -191,6 +191,7 @@ def download_video(url, quality, embed_subs=False, embed_thumb=False, audio_form
         '-o', output_path,
         '--merge-output-format', 'mp4',
         '--no-playlist',
+        '--socket-timeout', '30',
         '--extractor-args', 'generic:impersonate',
         '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     ]
@@ -228,6 +229,8 @@ def download_video(url, quality, embed_subs=False, embed_thumb=False, audio_form
     
     # Add URL
     cmd.append(url)
+    
+    print(f"Executing command: {' '.join(cmd)}")
     
     try:
         process = subprocess.Popen(
