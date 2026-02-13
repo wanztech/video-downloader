@@ -47,6 +47,11 @@ st.markdown("""
     footer {visibility: hidden;}
     .stDeployButton {display:none;}
     
+    /* Hide Hugging Face Spaces Header & Footer */
+    div[class*="flex items-center justify-between xl:min-w-0"] { display: none !important; }
+    footer[class*="flex-none flex flex-col"] { display: none !important; }
+    .footer { display: none !important; }
+    
     /* Hide Profile Preview - target by substring and attribute */
     div[class*="_profilePreview_"] { display: none !important; }
     img[data-testid="appCreatorAvatar"] { display: none !important; }
