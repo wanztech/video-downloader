@@ -50,6 +50,8 @@ st.markdown("""
     header {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display:none;}
+    ._profilePreview_gzau3_63 {display: none !important;}
+    ._link_gzau3_10 {display: none !important;}
     
     /* Custom Button Styling */
     .stButton > button {
