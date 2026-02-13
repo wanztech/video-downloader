@@ -271,6 +271,10 @@ def download_video(url, quality, embed_subs=False, embed_thumb=False, audio_form
         '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     ]
     
+    # Force mp4 extension for video downloads unless custom filename is used
+    if not custom_filename and quality != 'Audio Only':
+        cmd.extend(['--remux-video', 'mp4'])
+    
     # Add Subtitles
     if embed_subs:
         cmd.extend(['--embed-subs', '--sub-langs', 'all', '--write-subs'])
