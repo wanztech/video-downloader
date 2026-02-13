@@ -185,8 +185,15 @@ def download_video(url, quality, embed_subs=False, embed_thumb=False, audio_form
         fmt = 'bestvideo+bestaudio/best'
     
     # Build command
-    cmd = [
-        yt_dlp_path,
+    cmd = []
+    
+    # Check if we should use python -m yt_dlp
+    if yt_dlp_path == 'yt-dlp':
+        cmd.extend([sys.executable, '-m', 'yt_dlp'])
+    else:
+        cmd.append(yt_dlp_path)
+        
+    cmd.extend([
         '-f', fmt,
         '-o', output_path,
         '--merge-output-format', 'mp4',
@@ -194,7 +201,7 @@ def download_video(url, quality, embed_subs=False, embed_thumb=False, audio_form
         '--socket-timeout', '30',
         '--extractor-args', 'generic:impersonate',
         '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-    ]
+    ])
     
     # Force mp4 extension for video downloads unless custom filename is used
     if not custom_filename and quality != 'Audio Only':

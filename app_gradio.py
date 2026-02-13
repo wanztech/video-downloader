@@ -38,6 +38,11 @@ def process_download(url, quality, audio_fmt, custom_name, embed_subs, embed_thu
                     progress(percent / 100, desc=f"Downloading: {percent}%")
                 except:
                     pass
+            elif '[download]' in line:
+                progress(0, desc="Processing...")
+        
+        # Initial check
+        progress(0, desc="Initializing yt-dlp...")
         
         file_path, error = core.download_video(
             url, quality, embed_subs, embed_thumb, audio_fmt, custom_name, progress_callback
