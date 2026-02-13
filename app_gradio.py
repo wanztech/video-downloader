@@ -14,9 +14,10 @@ def analyze_video(url):
     
     # Format output for display
     details = f"""
-    **Title:** {info['title']}
-    **Duration:** {info['duration']}
-    **Uploader:** {info['uploader']}
+    ### 📹 Maklumat Video
+    **Tajuk:** {info['title']}  
+    **Tempoh:** {info['duration']}  
+    **Saluran:** {info['uploader']}
     """
     return info['thumbnail'], details
 
@@ -48,51 +49,100 @@ def process_download(url, quality, audio_fmt, custom_name, embed_subs, embed_thu
 
 # Custom CSS
 css = """
-.container { max-width: 800px; margin: auto; }
-.footer { text-align: center; margin-top: 20px; color: #666; }
+.container { max-width: 900px; margin: auto; padding-top: 20px; }
+.header { text-align: center; margin-bottom: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+.header h1 { font-size: 2.5em; font-weight: bold; color: #6b46c1; margin-bottom: 10px; }
+.header p { font-size: 1.1em; color: #666; }
+.footer { text-align: center; margin-top: 40px; color: #888; font-size: 0.9em; border-top: 1px solid #eee; padding-top: 20px; }
+.gr-button-primary { background: linear-gradient(90deg, #6b46c1 0%, #805ad5 100%); border: none; color: white; }
+.gr-box { border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
 """
 
-with gr.Blocks(css=css, title="Universal Video Downloader") as app:
-    gr.Markdown(
-        """
-        # 🎬 Universal Video Downloader
-        Powered by yt-dlp + ffmpeg | Created by wanztech
-        """
-    )
-    
-    with gr.Row():
-        url_input = gr.Textbox(label="URL Video", placeholder="https://www.youtube.com/watch?v=...", scale=4)
-        analyze_btn = gr.Button("🔍 Analisis", scale=1)
-    
-    with gr.Row(visible=True) as info_row:
-        thumb_output = gr.Image(label="Thumbnail", height=200, show_download_button=False)
-        details_output = gr.Markdown(label="Video Details")
-    
-    with gr.Accordion("⚙️ Tetapan Download", open=True):
-        with gr.Row():
-            quality_dropdown = gr.Dropdown(
-                choices=['4K (2160p)', '2K (1440p)', '1080p', '720p', '480p', 'Audio Only'],
-                value='1080p',
-                label="Kualiti"
-            )
-            audio_fmt_dropdown = gr.Dropdown(
-                choices=['mp3', 'm4a', 'wav', 'flac'],
-                value='mp3',
-                label="Format Audio (Jika Audio Only)",
-                interactive=True
-            )
-        
-        custom_name_input = gr.Textbox(label="Nama Fail (Optional)", placeholder="Biarkan kosong untuk default...")
-        
-        with gr.Row():
-            subs_check = gr.Checkbox(label="Download Subtitle", value=True)
-            thumb_check = gr.Checkbox(label="Embed Thumbnail", value=True)
+# Modern Theme
+theme = gr.themes.Soft(
+    primary_hue="purple",
+    secondary_hue="indigo",
+    neutral_hue="slate",
+).set(
+    button_primary_background_fill="*primary_500",
+    button_primary_background_fill_hover="*primary_600",
+    block_shadow="*shadow_drop_lg",
+    block_title_text_weight="600"
+)
 
-    download_btn = gr.Button("🚀 Mula Download", variant="primary", size="lg")
+with gr.Blocks(theme=theme, css=css, title="Universal Video Downloader Pro") as app:
     
-    status_output = gr.Textbox(label="Status", interactive=False)
-    file_output = gr.File(label="File Downloaded")
-    
+    with gr.Column(elem_classes="container"):
+        
+        # Header
+        gr.Markdown(
+            """
+            <div class="header">
+                <h1>🎬 Universal Video Downloader Pro</h1>
+                <p>Muat turun video berkualiti tinggi dengan mudah & pantas!</p>
+            </div>
+            """
+        )
+        
+        # Input Section
+        with gr.Group():
+            with gr.Row(variant="panel"):
+                url_input = gr.Textbox(
+                    label="Pautan Video", 
+                    placeholder="Tampal URL di sini (YouTube, Facebook, TikTok, dll...)", 
+                    scale=4,
+                    show_label=False,
+                    container=False,
+                    autofocus=True
+                )
+                analyze_btn = gr.Button("🔍 Analisis", variant="primary", scale=1, min_width=120)
+
+        # Output Preview Section
+        with gr.Row(visible=True, variant="panel", equal_height=True):
+            with gr.Column(scale=1):
+                thumb_output = gr.Image(label="Thumbnail", show_download_button=False, interactive=False, height=200)
+            with gr.Column(scale=2):
+                details_output = gr.Markdown("### ℹ️ Sila masukkan URL dan tekan Analisis")
+
+        # Settings Section
+        with gr.Accordion("⚙️ Tetapan Lanjutan", open=False):
+            with gr.Row():
+                quality_dropdown = gr.Dropdown(
+                    choices=['4K (2160p)', '2K (1440p)', '1080p', '720p', '480p', 'Audio Only'],
+                    value='1080p',
+                    label="Kualiti Video"
+                )
+                audio_fmt_dropdown = gr.Dropdown(
+                    choices=['mp3', 'm4a', 'wav', 'flac'],
+                    value='mp3',
+                    label="Format Audio (Jika Audio Only)",
+                    interactive=False
+                )
+            
+            custom_name_input = gr.Textbox(label="Nama Fail (Optional)", placeholder="Contoh: video_latihan_01")
+            
+            with gr.Row():
+                subs_check = gr.Checkbox(label="Sertakan Subtitle", value=True)
+                thumb_check = gr.Checkbox(label="Embed Thumbnail", value=True)
+
+        # Action Section
+        with gr.Group():
+            download_btn = gr.Button("🚀 Mula Muat Turun", variant="primary", size="lg")
+            
+        with gr.Row():
+            status_output = gr.Textbox(label="Status Proses", interactive=False, show_label=True, scale=2)
+            file_output = gr.File(label="Fail Siap", scale=1)
+
+        # Footer
+        gr.Markdown(
+            """
+            <div class="footer">
+            Dikuasakan oleh <b>yt-dlp</b> & <b>FFmpeg</b> | Dibangunkan oleh <b>wanztech</b><br>
+            ⚠️ Untuk tujuan pendidikan sahaja. Sila hormati hak cipta.
+            </div>
+            """
+        )
+
     # Event Handlers
     def update_audio_state(quality):
         if quality == 'Audio Only':
@@ -111,16 +161,6 @@ with gr.Blocks(css=css, title="Universal Video Downloader") as app:
         process_download,
         inputs=[url_input, quality_dropdown, audio_fmt_dropdown, custom_name_input, subs_check, thumb_check],
         outputs=[file_output, status_output]
-    )
-    
-    gr.Markdown(
-        """
-        ---
-        <div class="footer">
-        ✨ Penafian: Alat ini untuk tujuan pembelajaran & arkib peribadi sahaja.<br>
-        Sila hormati hak cipta & sokong content creator! ❤️
-        </div>
-        """
     )
 
 if __name__ == "__main__":
