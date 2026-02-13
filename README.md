@@ -3,9 +3,8 @@ title: Universal Video Downloader
 emoji: 🎬
 colorFrom: red
 colorTo: purple
-sdk: gradio
-sdk_version: 5.16.0
-app_file: app_gradio.py
+sdk: docker
+app_port: 8000
 pinned: false
 ---
 
